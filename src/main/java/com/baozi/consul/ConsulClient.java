@@ -31,7 +31,6 @@ import org.apache.hc.core5.util.Timeout;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,7 +118,7 @@ public class ConsulClient implements CatalogClient, HealthClient, ServiceClient,
     }
 
     @Override
-    public KVStore readKey(String key) throws ConsulClientException {
+    public List<KVStore> readKey(String key) throws ConsulClientException {
         try {
             return this.httpClient.execute(consulHost,
                     ClassicRequestBuilder.get("/v1/kv/" + key).build(),
@@ -128,7 +127,12 @@ public class ConsulClient implements CatalogClient, HealthClient, ServiceClient,
                             return null;
                         HttpEntity entity = response.getEntity();
                         try (InputStream inputStream = entity.getContent()) {
-                            return JSON.parseObject(inputStream, KVStore.class);
+                            JSONArray objects = JSON.parseArray(inputStream);
+                            List<KVStore> kvStoreList = new ArrayList<>(objects.size());
+                            for (int i = 0; i < objects.size(); i++) {
+                                kvStoreList.add(objects.getObject(i, KVStore.class));
+                            }
+                            return kvStoreList;
                         }
                     }
             );
