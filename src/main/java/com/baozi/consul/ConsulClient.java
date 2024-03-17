@@ -12,7 +12,6 @@ import com.baozi.consul.clients.ServiceClient;
 import com.baozi.consul.exception.ConsulClientException;
 import com.baozi.consul.properties.ConsulProperties;
 import com.baozi.consul.properties.HttpClientProperties;
-import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -34,6 +33,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ConsulClient implements CatalogClient, HealthClient, ServiceClient, KVStoreClient {
     private final CloseableHttpClient httpClient;
@@ -42,31 +42,31 @@ public class ConsulClient implements CatalogClient, HealthClient, ServiceClient,
     public ConsulClient(HttpClientProperties httpClientProperties, ConsulProperties consulProperties)
             throws URISyntaxException {
         HttpClientProperties.DefaultSocketProperties defaultSocket = httpClientProperties.getDefaultSocket();
-        HttpClientProperties.DefaultConnectionProperties defaultConnection = httpClientProperties.getDefaultConnection();
         HttpClientProperties.RequestProperties requestProperties = httpClientProperties.getRequest();
 
         PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultSocketConfig(SocketConfig.custom()
-                        .setSoTimeout(Timeout.of(defaultSocket.getSoTimeout()))
+                        .setSoTimeout(Timeout.of(defaultSocket.getSoTimeout().toMillis(), TimeUnit.MILLISECONDS))
                         .build())
                 .setMaxConnTotal(httpClientProperties.getMaxConnTotal())
                 .setMaxConnPerRoute(httpClientProperties.getMaxConnPerRoute())
                 .setPoolConcurrencyPolicy(PoolConcurrencyPolicy.LAX)
                 .setConnPoolPolicy(PoolReusePolicy.LIFO)
-                .setDefaultConnectionConfig(ConnectionConfig.custom()
-                        .setSocketTimeout(Timeout.of(defaultConnection.getSocketTimeout()))
-                        .setConnectTimeout(Timeout.of(defaultConnection.getConnectTimeout()))
-                        .setTimeToLive(TimeValue.of(defaultConnection.getTimeToLive()))
-                        .build())
+                .setConnectionTimeToLive(TimeValue.of(httpClientProperties.getConnectTimeToLive().toMillis(), TimeUnit.MILLISECONDS))
+//                .setDefaultConnectionConfig(ConnectionConfig.custom()
+//                        .setSocketTimeout(Timeout.of(defaultConnection.getSocketTimeout().toMillis(), TimeUnit.MILLISECONDS))
+//                        .setConnectTimeout(Timeout.of(defaultConnection.getConnectTimeout().toMillis(), TimeUnit.MILLISECONDS))
+//                        .setTimeToLive(TimeValue.of(defaultConnection.getTimeToLive().toMillis(), TimeUnit.MILLISECONDS))
+//                        .build())
                 .build();
 
-        connectionManager.closeIdle(TimeValue.of(httpClientProperties.getCloseIdle()));
+        connectionManager.closeIdle(TimeValue.of(httpClientProperties.getCloseIdle().toMillis(), TimeUnit.MILLISECONDS));
 
         this.httpClient = HttpClients.custom()
                 .setConnectionManager(connectionManager)
                 .setDefaultRequestConfig(RequestConfig.custom()
-                        .setConnectionRequestTimeout(Timeout.of(requestProperties.getConnectionRequestTimeout()))
-                        .setConnectionKeepAlive(TimeValue.of(requestProperties.getConnectionKeepAlive()))
+                        .setConnectionRequestTimeout(Timeout.of(requestProperties.getConnectionRequestTimeout().toMillis(), TimeUnit.MILLISECONDS))
+                        .setConnectionKeepAlive(TimeValue.of(requestProperties.getConnectionKeepAlive().toMillis(), TimeUnit.MILLISECONDS))
                         .build())
                 .build();
         this.consulHost = HttpHost.create("http://" + consulProperties.getHost() + ":" + consulProperties.getPort());

@@ -5,8 +5,8 @@ import java.time.Duration;
 public class HttpClientProperties {
     private Integer maxConnTotal = 1000;
     private Integer maxConnPerRoute = 100;
+    private Duration connectTimeToLive = Duration.ofSeconds(5);
     private DefaultSocketProperties defaultSocket = new DefaultSocketProperties();
-    private DefaultConnectionProperties defaultConnection = new DefaultConnectionProperties();
     private Duration closeIdle = Duration.ofSeconds(5);
     private RequestProperties request = new RequestProperties();
 
@@ -26,20 +26,20 @@ public class HttpClientProperties {
         this.maxConnPerRoute = maxConnPerRoute;
     }
 
+    public Duration getConnectTimeToLive() {
+        return connectTimeToLive;
+    }
+
+    public void setConnectTimeToLive(Duration connectTimeToLive) {
+        this.connectTimeToLive = connectTimeToLive;
+    }
+
     public DefaultSocketProperties getDefaultSocket() {
         return defaultSocket;
     }
 
     public void setDefaultSocket(DefaultSocketProperties defaultSocket) {
         this.defaultSocket = defaultSocket;
-    }
-
-    public DefaultConnectionProperties getDefaultConnection() {
-        return defaultConnection;
-    }
-
-    public void setDefaultConnection(DefaultConnectionProperties defaultConnection) {
-        this.defaultConnection = defaultConnection;
     }
 
     public Duration getCloseIdle() {
@@ -67,36 +67,6 @@ public class HttpClientProperties {
 
         public void setSoTimeout(Duration soTimeout) {
             this.soTimeout = soTimeout;
-        }
-    }
-
-    public static class DefaultConnectionProperties {
-        private Duration socketTimeout = Duration.ofSeconds(5);
-        private Duration connectTimeout = Duration.ofSeconds(5);
-        private Duration timeToLive = Duration.ofSeconds(5);
-
-        public Duration getSocketTimeout() {
-            return socketTimeout;
-        }
-
-        public void setSocketTimeout(Duration socketTimeout) {
-            this.socketTimeout = socketTimeout;
-        }
-
-        public Duration getConnectTimeout() {
-            return connectTimeout;
-        }
-
-        public void setConnectTimeout(Duration connectTimeout) {
-            this.connectTimeout = connectTimeout;
-        }
-
-        public Duration getTimeToLive() {
-            return timeToLive;
-        }
-
-        public void setTimeToLive(Duration timeToLive) {
-            this.timeToLive = timeToLive;
         }
     }
 
